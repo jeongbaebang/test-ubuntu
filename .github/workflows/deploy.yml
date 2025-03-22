@@ -46,8 +46,4 @@ jobs:
             export DENO_INSTALL="$HOME/.deno"
             export PATH="$DENO_INSTALL/bin:$PATH"
 
-            # 심볼릭 링크 생성
-            ln -s "$NVM_DIR/versions/node/$(nvm current)/bin/pm2" "/usr/local/bin/pm2" || echo "PM2 symlink already exists"
-            ln -s "$DENO_INSTALL/bin/deno" "/usr/local/bin/deno" || echo "Deno symlink already exists"
-
-            pm2 restart deno-app || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
+            pm2 restart deno-app --update-env || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
