@@ -18,7 +18,7 @@ jobs:
       - run: deno cache --reload app.ts
 
       - name: Deploy to production
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.REMOTE_SSH_HOST }}
           username: ${{ secrets.REMOTE_SSH_USERNAME }}
@@ -39,7 +39,9 @@ jobs:
 
             # .env 파일 생성 및 권한 설정
             echo "PORT=${{ secrets.APP_PORT }}" > .env
-            chmod 644 .env
 
             # 애플리케이션 재시작
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+             
             pm2 restart deno-app || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
