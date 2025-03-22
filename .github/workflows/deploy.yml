@@ -47,3 +47,5 @@ jobs:
             export PATH="$DENO_INSTALL/bin:$PATH"
 
             pm2 restart deno-app --update-env || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
+
+            pm2 save
