@@ -10,12 +10,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-          
+      - run: deno cache --reload app.ts
+
       - name: Deploy to production
         uses: appleboy/ssh-action@v1.2.2
         with:
@@ -24,19 +25,26 @@ jobs:
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: ${{ secrets.REMOTE_SSH_PORT }}
           script: |
-            # 최초 실행 시 저장소가 없다면 클론
+            # 디렉토리 권한 설정
+            sudo mkdir -p ${{ secrets.APP_DIR }}
+            sudo chown -R $USER:$USER ${{ secrets.APP_DIR }}
+            sudo chmod -R 755 ${{ secrets.APP_DIR }}
+
+            # Git 저장소 설정 및 코드 업데이트
             if [ ! -d "${{ secrets.APP_DIR }}/.git" ]; then
-              mkdir -p ${{ secrets.APP_DIR }}
-              git clone https://github.com/jeongbaebang/test-ubuntu.git ${{ secrets.APP_DIR }}
+              cd ${{ secrets.APP_DIR }}
+              git init
+              git remote add origin https://github.com/jeongbaebang/test-ubuntu.git
+              git fetch
             fi
-            
-            # .env 파일 생성
+
             cd ${{ secrets.APP_DIR }}
-            echo "PORT=${{ secrets.APP_PORT }}" > .env
-            
-            # 코드 업데이트 및 애플리케이션 재시작
             git fetch --all
             git reset --hard origin/main
-            deno cache --reload app.ts
-            pm2 restart deno-app || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
 
+            # .env 파일 생성 및 권한 설정
+            echo "PORT=${{ secrets.APP_PORT }}" > .env
+            chmod 644 .env
+
+            # 애플리케이션 재시작
+            pm2 restart deno-app || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
