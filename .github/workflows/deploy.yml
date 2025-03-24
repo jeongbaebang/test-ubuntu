@@ -35,7 +35,7 @@ jobs:
             export DENO_INSTALL="$HOME/.deno"
             export PATH="$DENO_INSTALL/bin:$PATH"
 
-            deno cache --reload=./app.ts
+            deno cache --reload app.ts
 
             # PM2 프로세스 관리
             pm2 restart deno-app --update-env || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
