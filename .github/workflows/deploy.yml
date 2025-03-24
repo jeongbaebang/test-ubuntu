@@ -15,7 +15,19 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno cache --reload app.ts
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.deno
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-${{ hashFiles('**/deps.ts') || hashFiles('**/app.ts') || 'default' }}
+          restore-keys: |
+            ${{ runner.os }}-deno-
+
+      - name: Cache and compile
+        run: deno cache --reload app.ts
 
       - name: Deploy to production
         uses: appleboy/ssh-action@master
@@ -45,6 +57,9 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             export DENO_INSTALL="$HOME/.deno"
             export PATH="$DENO_INSTALL/bin:$PATH"
+
+            # 의존성 캐싱
+            deno cache --reload app.ts
 
             pm2 restart deno-app --update-env || pm2 start app.ts --interpreter="deno" --interpreter-args="run --allow-net --allow-env --allow-read" --name "deno-app"
 
